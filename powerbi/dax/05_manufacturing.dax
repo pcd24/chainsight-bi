@@ -1,0 +1,98 @@
+// ======================================================================= Display folder: 05 Manufacturing
+// OEE = Availability x Performance x Quality, always built from AGGREGATED sums.
+
+Production Output = SUM ( Production[total_units] )
+// Format: #,0
+
+Good Units = SUM ( Production[good_units] )
+
+Defective Units = SUM ( Production[defect_units] )
+
+Defect Rate = DIVIDE ( [Defective Units], [Production Output] )
+// Format: 0.00%
+
+Planned Production Time (h) = SUM ( Production[planned_minutes] ) / 60
+// Format: #,0
+
+Operating Time (h) = SUM ( Production[operating_minutes] ) / 60
+// Format: #,0
+
+Availability = DIVIDE ( SUM ( Production[operating_minutes] ), SUM ( Production[planned_minutes] ) )
+// Run time / planned time. Format: 0.0%
+
+Performance = DIVIDE ( SUM ( Production[total_units] ), SUM ( Production[ideal_units] ) )
+// Actual output / output at rated speed for the time run. Format: 0.0%
+
+Quality = DIVIDE ( SUM ( Production[good_units] ), SUM ( Production[total_units] ) )
+// Format: 0.0%
+
+OEE = [Availability] * [Performance] * [Quality]
+// Format: 0.0%
+
+Rated Capacity Units = SUM ( Production[capacity_units] )
+
+Output vs Rated Capacity = DIVIDE ( SUM ( Production[total_units] ), SUM ( Production[capacity_units] ) )
+// Output as % of what machines could make at rated speed for ALL planned minutes (= Availability x Performance).
+
+Shifts Run = COUNTROWS ( Production )
+
+Available Shifts =
+// 2 shifts per machine per calendar day (up to the last data date)
+COUNTROWS ( Machine ) * 2 * [Days in Period]
+
+Capacity Utilization = DIVIDE ( [Shifts Run], [Available Shifts] )
+// Share of available machine-shifts that were actually scheduled. Use with Plant or Machine on the axis. Format: 0.0%
+
+Downtime Hours = SUM ( Downtime[duration_hours] )
+// Format: #,0
+
+Unplanned Downtime Hours = CALCULATE ( SUM ( Downtime[duration_hours] ), Downtime[is_planned_flag] = 0 )
+
+Material Shortage Hours = SUM ( Production[material_shortage_minutes] ) / 60
+// Hours machines waited for raw material (supply-driven loss). Format: #,0
+
+Equipment Failure Hours = SUM ( Production[equipment_failure_minutes] ) / 60
+
+Changeover Hours = SUM ( Production[changeover_minutes] ) / 60
+
+Failure Events =
+CALCULATE ( COUNTROWS ( Downtime ), 'Downtime Type'[loss_category] = "Equipment failure" )
+// Format: #,0
+
+Failures per 1,000 Operating Hours = DIVIDE ( [Failure Events], [Operating Time (h)] ) * 1000
+// Format: 0.0
+
+Production Loss (Units) = SUM ( Downtime[lost_units_est] )
+// Estimated: downtime minutes x rated speed. Format: #,0
+
+Scrap Cost = SUM ( Defects[scrap_cost] )
+// Format: $#,0
+
+Defect Units (by type) = SUM ( Defects[defect_qty] )
+
+Maintenance Orders = COUNTROWS ( Maintenance )
+
+Corrective Maintenance Orders = SUM ( Maintenance[corrective_flag] )
+
+Corrective Maintenance % = DIVIDE ( [Corrective Maintenance Orders], [Maintenance Orders] )
+// Format: 0.0%
+
+Maintenance Cost = SUM ( Maintenance[cost] )
+// Orders with missing cost are blank and ignored. Format: $#,0
+
+Downtime Share % =
+DIVIDE ( [Downtime Hours], CALCULATE ( [Downtime Hours], ALLSELECTED ( 'Downtime Type' ) ) )
+
+Cumulative Downtime % (Pareto) =
+VAR _cur = [Downtime Hours]
+VAR _all = ALLSELECTED ( 'Downtime Type'[downtime_type] )
+RETURN
+    DIVIDE (
+        SUMX ( FILTER ( _all, [Downtime Hours] >= _cur ), [Downtime Hours] ),
+        SUMX ( _all, [Downtime Hours] )
+    )
+// For the Pareto line on page 7. Format: 0%
+
+Materials Consumed = SUM ( 'Material Consumption'[quantity_consumed] )
+
+Material Consumption Value = SUM ( 'Material Consumption'[consumption_value] )

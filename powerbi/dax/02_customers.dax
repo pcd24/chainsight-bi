@@ -1,0 +1,72 @@
+// ======================================================================= Display folder: 02 Customers
+// A "customer" here is a buyer with at least one NON-CANCELLED order in the selected period.
+
+Customers =
+CALCULATE ( DISTINCTCOUNT ( Orders[customer_key] ), 'Order Status'[order_status] <> "Cancelled" )
+// Format: #,0
+
+New Customers =
+CALCULATE ( DISTINCTCOUNT ( Orders[customer_key] ), Orders[is_first_order] = 1 )
+// Customers whose FIRST non-cancelled order falls in the period. Format: #,0
+
+Returning Customers = [Customers] - [New Customers]
+// Format: #,0
+
+Repeat Customers =
+COUNTROWS (
+    FILTER (
+        VALUES ( Orders[customer_key] ),
+        CALCULATE ( COUNTROWS ( Orders ), 'Order Status'[order_status] <> "Cancelled" ) >= 2
+    )
+)
+// Customers with 2+ non-cancelled orders inside the selected period. Format: #,0
+
+Repeat Purchase Rate = DIVIDE ( [Repeat Customers], [Customers] )
+// Format: 0.0%
+
+Customer Revenue = [Total Revenue]
+// Use with Customer[full_name] on the axis. Format: $#,0
+
+Revenue per Customer = DIVIDE ( [Total Revenue], [Customers] )
+// Format: $#,0
+
+Orders per Customer = DIVIDE ( CALCULATE ( COUNTROWS ( Orders ), 'Order Status'[order_status] <> "Cancelled" ), [Customers] )
+// Purchase frequency. Format: 0.00
+
+Customer Lifetime Value (Historical) =
+// Defined as: gross profit earned per customer across ALL history in the current non-date selection.
+// It is a HISTORICAL value measure, not a prediction.
+DIVIDE (
+    CALCULATE ( [Gross Profit], REMOVEFILTERS ( 'Date' ) ),
+    CALCULATE ( DISTINCTCOUNT ( Orders[customer_key] ), 'Order Status'[order_status] <> "Cancelled", REMOVEFILTERS ( 'Date' ) )
+)
+// Format: $#,0.00
+
+Cohort Customers Active =
+CALCULATE (
+    DISTINCTCOUNT ( Orders[customer_key] ),
+    'Order Status'[order_status] <> "Cancelled",
+    REMOVEFILTERS ( 'Date' )
+)
+// Matrix: rows Customer[cohort_month], columns Orders[months_since_first_order].
+
+Cohort Size =
+CALCULATE (
+    DISTINCTCOUNT ( Orders[customer_key] ),
+    Orders[months_since_first_order] = 0,
+    'Order Status'[order_status] <> "Cancelled",
+    REMOVEFILTERS ( 'Date' )
+)
+
+Cohort Retention % = DIVIDE ( [Cohort Customers Active], [Cohort Size] )
+// Format: 0%. Conditional format as a colour scale (white -> dark teal).
+
+Customers by Segment =
+DISTINCTCOUNT ( Customer[customer_key] )
+// Use with Customer[customer_segment] (as of 2025-12-31). Not affected by Date slicer by design.
+
+Inactive Customers (180d+) =
+CALCULATE (
+    DISTINCTCOUNT ( Customer[customer_key] ),
+    Customer[customer_segment] IN { "At Risk", "Lost" }
+)

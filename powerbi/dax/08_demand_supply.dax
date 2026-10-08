@@ -1,0 +1,41 @@
+// ======================================================================= Display folder: 08 Demand & Supply
+// Source: 'Product Supply Position' (analytics.v_demand_supply_status): one row per product, as of the last snapshot.
+// Relationship: Product[product_key] 1 -> 1 'Product Supply Position'[product_key], single direction.
+
+Current On-Hand (As Of) = SUM ( 'Product Supply Position'[on_hand] )
+Incoming Inventory (In Transit) = SUM ( 'Product Supply Position'[in_transit] )
+Backordered (As Of) = SUM ( 'Product Supply Position'[backordered] )
+Expected Demand 30d = SUM ( 'Product Supply Position'[expected_demand_30d] )
+Avg Daily Demand 90d = SUM ( 'Product Supply Position'[avg_daily_demand_90d] )
+Expected Supply 30d = SUM ( 'Product Supply Position'[on_hand] ) + SUM ( 'Product Supply Position'[incoming_supply_30d] )
+// On hand + in transit + average monthly good output of the last 3 months.
+Production Capacity 30d = SUM ( 'Product Supply Position'[demonstrated_capacity_30d] )
+// Best calendar-month good output in the last 12 months = demonstrated capacity.
+Supply Gap = SUM ( 'Product Supply Position'[supply_gap] )
+// on hand + incoming - expected demand - backordered. Negative = shortage.
+// Conditional format: red when < 0.
+
+Products Shortage Risk = CALCULATE ( COUNTROWS ( 'Product Supply Position' ), 'Product Supply Position'[supply_status] = "Shortage risk" )
+Products Capacity Constrained = CALCULATE ( COUNTROWS ( 'Product Supply Position' ), 'Product Supply Position'[supply_status] = "Capacity constrained" )
+Products Excess = CALCULATE ( COUNTROWS ( 'Product Supply Position' ), 'Product Supply Position'[supply_status] = "Excess inventory" )
+Products Balanced = CALCULATE ( COUNTROWS ( 'Product Supply Position' ), 'Product Supply Position'[supply_status] = "Balanced" )
+
+Units Short =
+// Total shortfall across products with a negative gap
+SUMX ( VALUES ( 'Product Supply Position'[product_key] ), MIN ( 0, CALCULATE ( SUM ( 'Product Supply Position'[supply_gap] ) ) ) ) * -1
+
+Capacity Coverage Ratio = DIVIDE ( [Production Capacity 30d], [Expected Demand 30d] )
+// Demonstrated monthly capacity / expected demand. Below 1.0 means demand exceeds proven capacity. Format: 0.00
+
+Supply Status Colour =
+SWITCH (
+    SELECTEDVALUE ( 'Product Supply Position'[supply_status] ),
+    "Shortage risk", "#C0392B",
+    "Capacity constrained", "#E67E22",
+    "Excess inventory", "#2980B9",
+    "Balanced", "#27AE60",
+    "#7F8C8D"
+)
+
+Products (Supply Position) = COUNTROWS ( 'Product Supply Position' )
+// Count of products in the current selection (use with supply_status on the axis).

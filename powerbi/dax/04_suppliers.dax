@@ -1,0 +1,69 @@
+// ======================================================================= Display folder: 04 Suppliers
+// Delivery metrics use RECEIVED deliveries (Supplier Deliveries); spend uses PURCHASE ORDER lines (Purchases).
+
+Supplier Spend = SUM ( Purchases[ordered_amount] )
+// Format: $#,0
+
+Purchase Orders (Lines) = COUNTROWS ( Purchases )
+
+Active Suppliers = DISTINCTCOUNT ( Purchases[supplier_key] )
+
+Deliveries Received = COUNTROWS ( 'Supplier Deliveries' )
+
+Late Deliveries = SUM ( 'Supplier Deliveries'[late_flag] )
+// Format: #,0
+
+Supplier On-Time % = DIVIDE ( SUM ( 'Supplier Deliveries'[on_time_flag] ), COUNTROWS ( 'Supplier Deliveries' ) )
+// Received on or before the promised date. Format: 0.0%
+
+Late Delivery % = 1 - [Supplier On-Time %]
+
+Average Supplier Lead Time = AVERAGE ( 'Supplier Deliveries'[actual_lead_days] )
+// Calendar days from PO date to receipt. Format: 0.0
+
+Average Promised Lead Time = AVERAGE ( 'Supplier Deliveries'[promised_lead_days] )
+
+Lead Time Gap (Days) = [Average Supplier Lead Time] - [Average Promised Lead Time]
+// Positive = slower than promised. Format: 0.0
+
+Average Days Late (when late) =
+CALCULATE ( AVERAGE ( 'Supplier Deliveries'[days_late] ), 'Supplier Deliveries'[late_flag] = 1 )
+
+Supplier Defect Rate = DIVIDE ( SUM ( 'Supplier Deliveries'[qty_rejected] ), SUM ( 'Supplier Deliveries'[qty_received] ) )
+// Rejected at inspection / received. Format: 0.00%
+
+In-Full % = DIVIDE ( SUM ( 'Supplier Deliveries'[in_full_flag] ), COUNTROWS ( 'Supplier Deliveries' ) )
+
+OTIF % =
+// On time AND in full
+DIVIDE (
+    CALCULATE ( COUNTROWS ( 'Supplier Deliveries' ), 'Supplier Deliveries'[on_time_flag] = 1, 'Supplier Deliveries'[in_full_flag] = 1 ),
+    COUNTROWS ( 'Supplier Deliveries' )
+)
+
+Price Variance vs Standard % = DIVIDE ( SUM ( Purchases[price_variance_amount] ), SUM ( Purchases[standard_amount] ) )
+// Positive = paid above standard cost. Format: 0.0%
+
+Supplier Spend Share % = DIVIDE ( [Supplier Spend], CALCULATE ( [Supplier Spend], ALLSELECTED ( Supplier ) ) )
+
+Top Supplier Spend Share % =
+// Share of spend taken by the single largest supplier in the current selection
+VAR _t = ADDCOLUMNS ( VALUES ( Supplier[supplier_name] ), "@s", [Supplier Spend] )
+RETURN DIVIDE ( MAXX ( _t, [@s] ), SUMX ( _t, [@s] ) )
+
+Supplier Performance Band =
+// Neutral reliability band (NOT a best/worst ranking)
+SWITCH (
+    TRUE (),
+    ISBLANK ( [Supplier On-Time %] ), BLANK (),
+    [Supplier On-Time %] >= 0.9, "A: 90%+ on time",
+    [Supplier On-Time %] >= 0.8, "B: 80-90%",
+    [Supplier On-Time %] >= 0.65, "C: 65-80%",
+    "D: below 65%"
+)
+
+Products Using Material = DISTINCTCOUNT ( BOM[product_key] )
+// Material dependency: how many products need the selected material.
+
+BOM Qty per Unit = SUM ( BOM[qty_per_unit] )
+// Put Material[material_name] on a table visual with Product filtered: only materials the product uses show a value.

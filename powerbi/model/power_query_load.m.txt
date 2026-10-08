@@ -1,0 +1,217 @@
+// ChainSight - Power Query (M) scripts. Create ONE blank query per block (Home > New Source > Blank Query > Advanced Editor),
+// paste the block, and rename the query to the name in the header comment. All use Import mode.
+//
+// FIRST create two parameters (Home > Manage Parameters): pgServer = "localhost:5432"  and  pgDatabase = "chainsight"
+// When asked for credentials choose Database and enter the PostgreSQL user/password (never saved in the file).
+
+// ===== Query name: Date   (source: dw.dim_date) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="dim_date"]}[Data]
+in
+    Data
+
+// ===== Query name: Customer   (source: dw.dim_customer) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="dim_customer"]}[Data]
+in
+    Data
+
+// ===== Query name: Product   (source: dw.dim_product) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="dim_product"]}[Data]
+in
+    Data
+
+// ===== Query name: Supplier   (source: dw.dim_supplier) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="dim_supplier"]}[Data]
+in
+    Data
+
+// ===== Query name: Material   (source: dw.dim_material) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="dim_material"]}[Data]
+in
+    Data
+
+// ===== Query name: Warehouse   (source: dw.dim_warehouse) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="dim_warehouse"]}[Data]
+in
+    Data
+
+// ===== Query name: Plant   (source: dw.dim_plant) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="dim_plant"]}[Data]
+in
+    Data
+
+// ===== Query name: Machine   (source: dw.dim_machine) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="dim_machine"]}[Data]
+in
+    Data
+
+// ===== Query name: Carrier   (source: dw.dim_carrier) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="dim_carrier"]}[Data]
+in
+    Data
+
+// ===== Query name: Promotion   (source: dw.dim_promotion) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="dim_promotion"]}[Data]
+in
+    Data
+
+// ===== Query name: Location   (source: dw.dim_location) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="dim_location"]}[Data]
+in
+    Data
+
+// ===== Query name: Order Status   (source: dw.dim_order_status) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="dim_order_status"]}[Data]
+in
+    Data
+
+// ===== Query name: Return Reason   (source: dw.dim_return_reason) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="dim_return_reason"]}[Data]
+in
+    Data
+
+// ===== Query name: Defect Type   (source: dw.dim_defect_type) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="dim_defect_type"]}[Data]
+in
+    Data
+
+// ===== Query name: Downtime Type   (source: dw.dim_downtime_type) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="dim_downtime_type"]}[Data]
+in
+    Data
+
+// ===== Query name: BOM   (source: dw.bridge_product_material) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="bridge_product_material"]}[Data]
+in
+    Data
+
+// ===== Query name: Orders   (source: dw.fact_orders) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="fact_orders"]}[Data]
+in
+    Data
+
+// ===== Query name: Order Items   (source: dw.fact_order_items) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="fact_order_items"]}[Data]
+in
+    Data
+
+// ===== Query name: Shipments   (source: dw.fact_shipments) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="fact_shipments"]}[Data]
+in
+    Data
+
+// ===== Query name: Returns   (source: dw.fact_returns) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="fact_returns"]}[Data]
+in
+    Data
+
+// ===== Query name: Inventory   (source: dw.fact_inventory_snapshot) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="fact_inventory_snapshot"]}[Data]
+in
+    Data
+
+// ===== Query name: Material Inventory   (source: dw.fact_material_inventory_snapshot) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="fact_material_inventory_snapshot"]}[Data]
+in
+    Data
+
+// ===== Query name: Purchases   (source: dw.fact_purchases) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="fact_purchases"]}[Data]
+in
+    Data
+
+// ===== Query name: Supplier Deliveries   (source: dw.fact_supplier_deliveries) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="fact_supplier_deliveries"]}[Data]
+in
+    Data
+
+// ===== Query name: Production   (source: dw.fact_production) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="fact_production"]}[Data]
+in
+    Data
+
+// ===== Query name: Material Consumption   (source: dw.fact_material_consumption) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="fact_material_consumption"]}[Data]
+in
+    Data
+
+// ===== Query name: Downtime   (source: dw.fact_downtime) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="fact_downtime"]}[Data]
+in
+    Data
+
+// ===== Query name: Maintenance   (source: dw.fact_maintenance) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="fact_maintenance"]}[Data]
+in
+    Data
+
+// ===== Query name: Defects   (source: dw.fact_defects) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="dw", Item="fact_defects"]}[Data]
+in
+    Data
+
+// ===== Query name: Product Supply Position   (source: analytics.v_demand_supply_status) =====
+let
+    Source = PostgreSQL.Database(pgServer, pgDatabase),
+    Data = Source{[Schema="analytics", Item="v_demand_supply_status"]}[Data]
+in
+    Data
+
+// NOTE: PostgreSQL.Database lists tables and views, so no SQL text is needed. Query folding is preserved (no transformations).

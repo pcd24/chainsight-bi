@@ -1,0 +1,31 @@
+// ======================================================================= Display folder: 06 Logistics
+
+Shipments Count = COUNTROWS ( Shipments )
+// Format: #,0
+
+On-Time Deliveries = SUM ( Shipments[on_time_flag] )
+
+On-Time Delivery % = DIVIDE ( SUM ( Shipments[on_time_flag] ), COUNT ( Shipments[on_time_flag] ) )
+// COUNT ignores blank flags (in transit / unreadable delivery dates). Format: 0.0%
+
+Delayed Shipments = SUM ( Shipments[delayed_flag] )
+
+Average Delivery Time (Days) = AVERAGE ( Shipments[order_to_delivery_days] )
+// Order date to delivery date. Format: 0.0
+
+Average Transit Time (Days) = AVERAGE ( Shipments[transit_days] )
+
+Average Days to Ship = AVERAGE ( Shipments[days_to_ship] )
+
+Shipping Cost = SUM ( Shipments[shipping_cost] )
+// Format: $#,0
+
+Shipping Cost per Shipment = DIVIDE ( [Shipping Cost], [Shipments Count] )
+// Format: $#,0.00
+
+Shipping Cost per kg = DIVIDE ( [Shipping Cost], SUM ( Shipments[weight_kg] ) )
+
+Shipping Cost % of Revenue =
+DIVIDE ( [Shipping Cost], CALCULATE ( SUM ( Orders[recognized_revenue] ), USERELATIONSHIP ( Orders[ship_date_key], 'Date'[date_key] ) ) )
+
+Average Days Late (Delayed) = CALCULATE ( AVERAGE ( Shipments[days_late] ), Shipments[delayed_flag] = 1 )

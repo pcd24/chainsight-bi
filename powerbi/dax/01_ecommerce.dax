@@ -1,0 +1,103 @@
+// ======================================================================= Display folder: 01 E-Commerce
+// Order Items is the driver for revenue measures (product-level filters work). Orders is used for order-level facts.
+
+Total Revenue = SUM ( 'Order Items'[recognized_revenue] )
+// Format: $#,0
+
+Gross Profit = SUM ( 'Order Items'[recognized_gross_profit] )
+// Format: $#,0
+
+COGS = SUM ( 'Order Items'[recognized_cogs] )
+// Format: $#,0
+
+Gross Margin % = DIVIDE ( [Gross Profit], [Total Revenue] )
+// Format: 0.0%
+
+Total Orders = DISTINCTCOUNT ( 'Order Items'[order_key] )
+// Orders PLACED (any status). Counts an order if it contains the filtered product(s).
+// Format: #,0
+
+Shipped Orders =
+CALCULATE ( DISTINCTCOUNT ( 'Order Items'[order_key] ), 'Order Status'[is_revenue_recognized] = TRUE () )
+// Format: #,0
+
+Units Ordered = SUM ( 'Order Items'[quantity] )
+// Format: #,0
+
+Units Sold =
+CALCULATE ( SUM ( 'Order Items'[quantity] ), 'Order Status'[is_revenue_recognized] = TRUE () )
+// Format: #,0
+
+AOV = DIVIDE ( [Total Revenue], [Shipped Orders] )
+// Average order value = recognised revenue / shipped orders
+// Format: $#,0.00
+
+Average Selling Price = DIVIDE ( [Total Revenue], [Units Sold] )
+// Format: $#,0.00
+
+Gross Sales =
+CALCULATE ( SUM ( 'Order Items'[gross_amount] ), 'Order Status'[is_revenue_recognized] = TRUE () )
+// Before discount. Format: $#,0
+
+Discount Amount =
+CALCULATE ( SUM ( 'Order Items'[discount_amount] ), 'Order Status'[is_revenue_recognized] = TRUE () )
+// Format: $#,0
+
+Discount Rate % = DIVIDE ( [Discount Amount], [Gross Sales] )
+// Format: 0.0%
+
+Cancelled Orders =
+CALCULATE ( DISTINCTCOUNT ( 'Order Items'[order_key] ), 'Order Status'[order_status] = "Cancelled" )
+
+Backordered Orders =
+CALCULATE ( DISTINCTCOUNT ( 'Order Items'[order_key] ), 'Order Status'[order_status] = "Backordered" )
+
+Cancellation Rate = DIVIDE ( [Cancelled Orders], [Total Orders] )
+// Format: 0.0%
+
+Backorder Rate = DIVIDE ( [Backordered Orders], [Total Orders] )
+// Format: 0.0%
+
+Unfulfilled Order Value =
+CALCULATE ( SUM ( 'Order Items'[net_amount] ), 'Order Status'[order_status] IN { "Cancelled", "Backordered" } )
+// Revenue at risk / lost to cancellation and backorder. Format: $#,0
+
+Fulfilment Rate = DIVIDE ( [Units Sold], [Units Ordered] )
+// Units shipped / units ordered. Format: 0.0%
+
+Avg Days to Dispatch = AVERAGE ( Orders[days_to_ship] )
+// Orders that have shipped. Format: 0.0
+
+Units Returned =
+CALCULATE ( SUM ( Returns[quantity_returned] ), USERELATIONSHIP ( Returns[order_date_key], 'Date'[date_key] ) )
+// Returns of units ORDERED in the selected period (cohort-consistent). Format: #,0
+
+Delivered Units =
+CALCULATE ( SUM ( 'Order Items'[quantity] ), 'Order Status'[order_status] = "Delivered" )
+
+Return Rate = DIVIDE ( [Units Returned], [Delivered Units] )
+// Format: 0.0%
+
+Refund Amount =
+CALCULATE ( SUM ( Returns[refund_amount] ), USERELATIONSHIP ( Returns[order_date_key], 'Date'[date_key] ) )
+// Format: $#,0
+
+Refund % of Revenue = DIVIDE ( [Refund Amount], CALCULATE ( [Total Revenue], 'Order Status'[order_status] = "Delivered" ) )
+// Format: 0.0%
+
+Revenue % of Total =
+DIVIDE ( [Total Revenue], CALCULATE ( [Total Revenue], ALLSELECTED () ) )
+// Format: 0.0%
+
+Revenue Rank (Product) =
+RANKX ( ALLSELECTED ( Product[product_name] ), [Total Revenue], , DESC, DENSE )
+
+Cumulative Revenue % (Pareto) =
+VAR _cur = [Total Revenue]
+VAR _all = ALLSELECTED ( Product[product_name] )
+RETURN
+    DIVIDE (
+        SUMX ( FILTER ( _all, [Total Revenue] >= _cur ), [Total Revenue] ),
+        SUMX ( _all, [Total Revenue] )
+    )
+// Use on a Pareto line chart sorted by [Total Revenue] descending. Format: 0%

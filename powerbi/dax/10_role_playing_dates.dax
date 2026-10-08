@@ -1,0 +1,29 @@
+// ======================================================================= Display folder: 10 Alternate Dates
+// The model has ONE Date table. Each fact has an ACTIVE date relationship and extra INACTIVE ones.
+// Activate an inactive one for a single measure with USERELATIONSHIP.
+
+Revenue by Ship Date =
+CALCULATE ( SUM ( Orders[recognized_revenue] ), USERELATIONSHIP ( Orders[ship_date_key], 'Date'[date_key] ) )
+// Revenue by the date the order SHIPPED (revenue recognition date).
+
+Orders by Promised Date =
+CALCULATE ( COUNTROWS ( Orders ), USERELATIONSHIP ( Orders[promised_date_key], 'Date'[date_key] ) )
+
+Shipments Delivered (by Delivery Date) =
+CALCULATE ( COUNTROWS ( Shipments ), USERELATIONSHIP ( Shipments[delivered_date_key], 'Date'[date_key] ) )
+
+Shipments by Promised Date =
+CALCULATE ( COUNTROWS ( Shipments ), USERELATIONSHIP ( Shipments[promised_date_key], 'Date'[date_key] ) )
+
+Returns by Return Date =
+CALCULATE ( SUM ( Returns[quantity_returned] ), USERELATIONSHIP ( Returns[return_date_key], 'Date'[date_key] ) )
+// NOTE: Returns' ACTIVE relationship is return_date_key. The Orders-based [Units Returned] / [Return Rate] in folder 01
+// explicitly activate order_date_key so the rate is cohort-consistent.
+
+PO Lines by Order Date =
+CALCULATE ( COUNTROWS ( Purchases ), USERELATIONSHIP ( Purchases[order_date_key], 'Date'[date_key] ) )
+
+PO Lines by Promised Date =
+CALCULATE ( COUNTROWS ( Purchases ), USERELATIONSHIP ( Purchases[promised_date_key], 'Date'[date_key] ) )
+
+Open PO Lines (Not Yet Received) = CALCULATE ( COUNTROWS ( Purchases ), Purchases[received_flag] = 0 )

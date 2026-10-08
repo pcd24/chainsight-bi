@@ -1,0 +1,87 @@
+// ======================================================================= Display folder: 03 Inventory
+// Inventory is a weekly SNAPSHOT: never SUM stock over time. Stock measures read the LAST snapshot inside the selected period.
+
+Last Snapshot Key = MAX ( Inventory[snapshot_date_key] )
+
+Inventory Quantity =
+VAR _d = MAX ( Inventory[snapshot_date_key] )
+RETURN CALCULATE ( SUM ( Inventory[qty_on_hand] ), Inventory[snapshot_date_key] = _d )
+// Format: #,0
+
+Inventory Value =
+VAR _d = MAX ( Inventory[snapshot_date_key] )
+RETURN CALCULATE ( SUM ( Inventory[inventory_value] ), Inventory[snapshot_date_key] = _d )
+// Format: $#,0
+
+Backordered Units =
+VAR _d = MAX ( Inventory[snapshot_date_key] )
+RETURN CALCULATE ( SUM ( Inventory[qty_backordered] ), Inventory[snapshot_date_key] = _d )
+
+In-Transit Units =
+VAR _d = MAX ( Inventory[snapshot_date_key] )
+RETURN CALCULATE ( SUM ( Inventory[qty_in_transit] ), Inventory[snapshot_date_key] = _d )
+
+Average Inventory =
+// Average of the weekly total inventory VALUE across the snapshots in the selected period
+AVERAGEX ( VALUES ( Inventory[snapshot_date_key] ), CALCULATE ( SUM ( Inventory[inventory_value] ) ) )
+// Format: $#,0
+
+Days in Period = CALCULATE ( COUNTROWS ( 'Date' ), 'Date'[is_actuals] = TRUE () )
+// Number of calendar days (up to the last data date) in the current selection. Format: #,0
+
+Inventory Turnover =
+// Annualised: (COGS / average inventory value) x (365 / days in period)
+DIVIDE ( [COGS], [Average Inventory] ) * DIVIDE ( 365, [Days in Period] )
+// Format: 0.0
+
+Days of Inventory = DIVIDE ( 365, [Inventory Turnover] )
+// Format: 0
+
+Stockout Rate = DIVIDE ( SUM ( Inventory[stockout_flag] ), SUM ( Inventory[active_sku_flag] ) )
+// Share of ACTIVE product-warehouse-weeks with zero stock. Format: 0.0%
+
+Low Stock Rate = DIVIDE ( SUM ( Inventory[low_stock_flag] ), SUM ( Inventory[active_sku_flag] ) )
+// Format: 0.0%
+
+Excess Rate = DIVIDE ( SUM ( Inventory[excess_flag] ), SUM ( Inventory[active_sku_flag] ) )
+// Format: 0.0%
+
+Low Stock Products =
+VAR _d = MAX ( Inventory[snapshot_date_key] )
+RETURN CALCULATE ( DISTINCTCOUNT ( Inventory[product_key] ), Inventory[snapshot_date_key] = _d, Inventory[low_stock_flag] = 1 )
+// Products with < 7 days of cover in at least one warehouse at the last snapshot. Format: #,0
+
+Stocked-out Products =
+VAR _d = MAX ( Inventory[snapshot_date_key] )
+RETURN CALCULATE ( DISTINCTCOUNT ( Inventory[product_key] ), Inventory[snapshot_date_key] = _d, Inventory[stockout_flag] = 1 )
+
+Excess Inventory =
+VAR _d = MAX ( Inventory[snapshot_date_key] )
+RETURN CALCULATE ( SUM ( Inventory[excess_value] ), Inventory[snapshot_date_key] = _d )
+// Value of stock above 90 days of demand at the last snapshot. Format: $#,0
+
+Excess Units =
+VAR _d = MAX ( Inventory[snapshot_date_key] )
+RETURN CALCULATE ( SUM ( Inventory[excess_qty] ), Inventory[snapshot_date_key] = _d )
+
+Average Days of Cover =
+VAR _d = MAX ( Inventory[snapshot_date_key] )
+RETURN CALCULATE ( AVERAGE ( Inventory[days_of_cover] ), Inventory[snapshot_date_key] = _d )
+
+Stock Not Sold 90d+ Value =
+VAR _d = MAX ( Inventory[snapshot_date_key] )
+RETURN CALCULATE ( SUM ( Inventory[inventory_value] ), Inventory[snapshot_date_key] = _d, Inventory[days_since_last_sale] > 90 )
+// Ageing proxy: stock value in rows with no sale for 90+ days.
+
+Raw Material Value =
+VAR _d = MAX ( 'Material Inventory'[snapshot_date_key] )
+RETURN CALCULATE ( SUM ( 'Material Inventory'[inventory_value] ), 'Material Inventory'[snapshot_date_key] = _d )
+
+Low Supply Materials =
+VAR _d = MAX ( 'Material Inventory'[snapshot_date_key] )
+RETURN CALCULATE ( COUNTROWS ( 'Material Inventory' ), 'Material Inventory'[snapshot_date_key] = _d, 'Material Inventory'[low_supply_flag] = 1 )
+// Material-plant combinations with < 7 days of supply at the last snapshot.
+
+Material Days of Supply =
+VAR _d = MAX ( 'Material Inventory'[snapshot_date_key] )
+RETURN CALCULATE ( AVERAGE ( 'Material Inventory'[days_of_supply] ), 'Material Inventory'[snapshot_date_key] = _d )

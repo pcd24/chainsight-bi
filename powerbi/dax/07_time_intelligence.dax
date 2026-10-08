@@ -1,0 +1,56 @@
+// ======================================================================= Display folder: 07 Time Intelligence
+// Requires: 'Date' marked as the date table on 'Date'[full_date]; relationships on date_key (integer) are fine once marked.
+// Filter pages/visuals to 'Date'[is_actuals] = TRUE so future-dated rows do not appear.
+
+Revenue MTD = TOTALMTD ( [Total Revenue], 'Date'[full_date] )
+Revenue QTD = TOTALQTD ( [Total Revenue], 'Date'[full_date] )
+Revenue YTD = TOTALYTD ( [Total Revenue], 'Date'[full_date] )
+Revenue FYTD = TOTALYTD ( [Total Revenue], 'Date'[full_date], "3/31" )
+// Fiscal year starts 1 April.
+
+Revenue Previous Month = CALCULATE ( [Total Revenue], DATEADD ( 'Date'[full_date], -1, MONTH ) )
+
+Revenue Previous Year = CALCULATE ( [Total Revenue], SAMEPERIODLASTYEAR ( 'Date'[full_date] ) )
+
+Revenue MoM % = DIVIDE ( [Total Revenue] - [Revenue Previous Month], [Revenue Previous Month] )
+// Format: 0.0%
+
+Revenue YoY % = DIVIDE ( [Total Revenue] - [Revenue Previous Year], [Revenue Previous Year] )
+// Format: 0.0%
+
+Revenue YoY Change = [Total Revenue] - [Revenue Previous Year]
+
+Revenue Rolling 3M =
+CALCULATE ( [Total Revenue], DATESINPERIOD ( 'Date'[full_date], MAX ( 'Date'[full_date] ), -3, MONTH ) )
+
+Revenue Rolling 12M =
+CALCULATE ( [Total Revenue], DATESINPERIOD ( 'Date'[full_date], MAX ( 'Date'[full_date] ), -12, MONTH ) )
+
+Gross Profit Previous Year = CALCULATE ( [Gross Profit], SAMEPERIODLASTYEAR ( 'Date'[full_date] ) )
+
+Gross Profit YoY % = DIVIDE ( [Gross Profit] - [Gross Profit Previous Year], [Gross Profit Previous Year] )
+
+Gross Margin Previous Year % = CALCULATE ( [Gross Margin %], SAMEPERIODLASTYEAR ( 'Date'[full_date] ) )
+
+Gross Margin Change (pts) = ( [Gross Margin %] - [Gross Margin Previous Year %] ) * 100
+// Percentage-point change vs same period last year. Format: 0.0
+
+Orders Previous Year = CALCULATE ( [Total Orders], SAMEPERIODLASTYEAR ( 'Date'[full_date] ) )
+
+Orders YoY % = DIVIDE ( [Total Orders] - [Orders Previous Year], [Orders Previous Year] )
+
+Orders MoM % =
+DIVIDE ( [Total Orders] - CALCULATE ( [Total Orders], DATEADD ( 'Date'[full_date], -1, MONTH ) ), CALCULATE ( [Total Orders], DATEADD ( 'Date'[full_date], -1, MONTH ) ) )
+
+OEE Previous Year = CALCULATE ( [OEE], SAMEPERIODLASTYEAR ( 'Date'[full_date] ) )
+
+OEE YoY Change (pts) = ( [OEE] - [OEE Previous Year] ) * 100
+
+Supplier On-Time Previous Year = CALCULATE ( [Supplier On-Time %], SAMEPERIODLASTYEAR ( 'Date'[full_date] ) )
+
+Stockout Rate Previous Year = CALCULATE ( [Stockout Rate], SAMEPERIODLASTYEAR ( 'Date'[full_date] ) )
+
+Revenue Latest Month = 
+// Revenue of the last month with data (for KPI cards that ignore the slicer's partial month)
+VAR _last = CALCULATE ( MAX ( 'Date'[month_start_date] ), 'Date'[is_actuals] = TRUE (), ALL ( 'Date' ) )
+RETURN CALCULATE ( [Total Revenue], 'Date'[month_start_date] = _last, ALL ( 'Date' ) )

@@ -1,0 +1,9 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+data/raw/*.csv
+data/processed/*
+!data/processed/.gitkeep
+*.pbix
+.DS_Store

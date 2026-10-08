@@ -1,0 +1,83 @@
+// ======================================================================= Display folder: 09 Control Tower
+// One headline KPI and one RAG status per stage of the chain. Thresholds are in docs/kpis.md - edit them here in one place.
+// RAG rule: higher-is-better KPIs are Green >= target, Amber >= floor, else Red. Lower-is-better are reversed.
+
+// ---- Stage 1: Suppliers
+CT Suppliers KPI = [Supplier On-Time %]
+CT Suppliers Status = SWITCH ( TRUE (), ISBLANK ( [CT Suppliers KPI] ), "Grey", [CT Suppliers KPI] >= 0.85, "Green", [CT Suppliers KPI] >= 0.75, "Amber", "Red" )
+
+// ---- Stage 2: Materials
+CT Materials KPI = [Material Days of Supply]
+CT Materials Status = SWITCH ( TRUE (), ISBLANK ( [CT Materials KPI] ), "Grey", [CT Materials KPI] >= 14, "Green", [CT Materials KPI] >= 7, "Amber", "Red" )
+
+// ---- Stage 3: Manufacturing
+CT Manufacturing KPI = [OEE]
+CT Manufacturing Status = SWITCH ( TRUE (), ISBLANK ( [CT Manufacturing KPI] ), "Grey", [CT Manufacturing KPI] >= 0.70, "Green", [CT Manufacturing KPI] >= 0.60, "Amber", "Red" )
+
+// ---- Stage 4: Inventory
+CT Inventory KPI = [Stockout Rate]
+CT Inventory Status = SWITCH ( TRUE (), ISBLANK ( [CT Inventory KPI] ), "Grey", [CT Inventory KPI] <= 0.08, "Green", [CT Inventory KPI] <= 0.12, "Amber", "Red" )
+
+// ---- Stage 5: Warehouse
+CT Warehouse KPI = [Avg Days to Dispatch]
+CT Warehouse Status = SWITCH ( TRUE (), ISBLANK ( [CT Warehouse KPI] ), "Grey", [CT Warehouse KPI] <= 3, "Green", [CT Warehouse KPI] <= 5, "Amber", "Red" )
+
+// ---- Stage 6: Orders
+CT Orders KPI = DIVIDE ( [Cancelled Orders] + [Backordered Orders], [Total Orders] )
+CT Orders Status = SWITCH ( TRUE (), ISBLANK ( [CT Orders KPI] ), "Grey", [CT Orders KPI] <= 0.06, "Green", [CT Orders KPI] <= 0.10, "Amber", "Red" )
+
+// ---- Stage 7: Shipments
+CT Shipments KPI = [On-Time Delivery %]
+CT Shipments Status = SWITCH ( TRUE (), ISBLANK ( [CT Shipments KPI] ), "Grey", [CT Shipments KPI] >= 0.85, "Green", [CT Shipments KPI] >= 0.75, "Amber", "Red" )
+
+// ---- Stage 8: Customers
+CT Customers KPI = [Return Rate]
+CT Customers Status = SWITCH ( TRUE (), ISBLANK ( [CT Customers KPI] ), "Grey", [CT Customers KPI] <= 0.06, "Green", [CT Customers KPI] <= 0.08, "Amber", "Red" )
+
+// ---- Status colour helper (use with Conditional formatting > Format by > Field value)
+CT Colour Suppliers = SWITCH ( [CT Suppliers Status], "Green", "#27AE60", "Amber", "#F39C12", "Red", "#C0392B", "#BDC3C7" )
+CT Colour Materials = SWITCH ( [CT Materials Status], "Green", "#27AE60", "Amber", "#F39C12", "Red", "#C0392B", "#BDC3C7" )
+CT Colour Manufacturing = SWITCH ( [CT Manufacturing Status], "Green", "#27AE60", "Amber", "#F39C12", "Red", "#C0392B", "#BDC3C7" )
+CT Colour Inventory = SWITCH ( [CT Inventory Status], "Green", "#27AE60", "Amber", "#F39C12", "Red", "#C0392B", "#BDC3C7" )
+CT Colour Warehouse = SWITCH ( [CT Warehouse Status], "Green", "#27AE60", "Amber", "#F39C12", "Red", "#C0392B", "#BDC3C7" )
+CT Colour Orders = SWITCH ( [CT Orders Status], "Green", "#27AE60", "Amber", "#F39C12", "Red", "#C0392B", "#BDC3C7" )
+CT Colour Shipments = SWITCH ( [CT Shipments Status], "Green", "#27AE60", "Amber", "#F39C12", "Red", "#C0392B", "#BDC3C7" )
+CT Colour Customers = SWITCH ( [CT Customers Status], "Green", "#27AE60", "Amber", "#F39C12", "Red", "#C0392B", "#BDC3C7" )
+
+Red Stages =
+VAR _n =
+    ( [CT Suppliers Status] = "Red" ) + ( [CT Materials Status] = "Red" ) + ( [CT Manufacturing Status] = "Red" ) + ( [CT Inventory Status] = "Red" )
+        + ( [CT Warehouse Status] = "Red" ) + ( [CT Orders Status] = "Red" ) + ( [CT Shipments Status] = "Red" ) + ( [CT Customers Status] = "Red" )
+RETURN _n
+
+Alert Text =
+// Plain-language alert list for the Executive page "Major operational alerts" card
+VAR _a1 = IF ( [CT Suppliers Status] = "Red", "Supplier on-time " & FORMAT ( [CT Suppliers KPI], "0%" ) & UNICHAR ( 10 ), "" )
+VAR _a2 = IF ( [CT Inventory Status] = "Red", "Stockout rate " & FORMAT ( [CT Inventory KPI], "0.0%" ) & UNICHAR ( 10 ), "" )
+VAR _a3 = IF ( [CT Manufacturing Status] = "Red", "OEE " & FORMAT ( [CT Manufacturing KPI], "0%" ) & UNICHAR ( 10 ), "" )
+VAR _a4 = IF ( [CT Orders Status] = "Red", "Cancelled/backordered orders " & FORMAT ( [CT Orders KPI], "0.0%" ) & UNICHAR ( 10 ), "" )
+VAR _a5 = IF ( [CT Shipments Status] = "Red", "On-time delivery " & FORMAT ( [CT Shipments KPI], "0%" ) & UNICHAR ( 10 ), "" )
+VAR _a6 = IF ( [CT Customers Status] = "Red", "Return rate " & FORMAT ( [CT Customers KPI], "0.0%" ) & UNICHAR ( 10 ), "" )
+VAR _a7 = IF ( [CT Materials Status] = "Red", "Raw material cover " & FORMAT ( [CT Materials KPI], "0" ) & " days" & UNICHAR ( 10 ), "" )
+VAR _a8 = IF ( [CT Warehouse Status] = "Red", "Days to dispatch " & FORMAT ( [CT Warehouse KPI], "0.0" ) & UNICHAR ( 10 ), "" )
+VAR _txt = _a1 & _a2 & _a3 & _a4 & _a5 & _a6 & _a7 & _a8
+RETURN IF ( _txt = "", "No red alerts for the current selection", _txt )
+
+// ---- Drill-through helpers (Investigate Product page)
+Product Problem Lines % =
+DIVIDE (
+    CALCULATE ( COUNTROWS ( 'Order Items' ), 'Order Status'[order_status] IN { "Cancelled", "Backordered" } )
+        + CALCULATE ( COUNTROWS ( 'Order Items' ), 'Order Status'[is_revenue_recognized] = TRUE (), 'Order Items'[fulfilment_delayed_flag] = 1 ),
+    COUNTROWS ( 'Order Items' )
+)
+// Share of order lines that were cancelled, backordered, or dispatched more than 2 days after ordering.
+
+Supplier On-Time % (Product Materials) =
+// On-time % for the materials used by the product(s) in context (BOM bridge, no bidirectional relationship needed)
+CALCULATE ( [Supplier On-Time %], TREATAS ( VALUES ( BOM[material_key] ), 'Supplier Deliveries'[material_key] ) )
+
+Late Deliveries (Product Materials) =
+CALCULATE ( [Late Deliveries], TREATAS ( VALUES ( BOM[material_key] ), 'Supplier Deliveries'[material_key] ) )
+
+Material Shortage Hours (Product) = [Material Shortage Hours]
+// Production is filtered by Product directly.

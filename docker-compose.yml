@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: chainsight-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-chainsight}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-chainsight}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - chainsight_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-chainsight} -d ${POSTGRES_DB:-chainsight}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  chainsight_pgdata:
